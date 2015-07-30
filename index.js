@@ -1,8 +1,5 @@
-function newEvents(i, month, response, value) {
-  /** @type {string} */
-  var col = i + "/events";
-  /** @type {string} */
-  var appFrontendUrl = col + "/index.json";
+var events=[];
+
   /** @type {string} */
   var update = "#events-mst";
   /** @type {string} */
@@ -17,20 +14,50 @@ function newEvents(i, month, response, value) {
   var anUnique = "#events article .carousel";
   /** @type {string} */
   var theNode = "#events article .img";
-  return function() {
+  
     $.ajax({
-      type : "GET",
-      url : appFrontendUrl,
-      cache : false,
-      dataType : "json"
-    }).done(function(list) {
+             url: "https://graph.facebook.com/oauth/access_token?client_id=114225848922835&client_secret=c852eddfe1880ebc994210c0e29ac329&grant_type=client_credentials",
+                 success: function(result){
+                 var accessToken=result.slice(13,result.length);
+                     console.log(accessToken);
+                     $.ajax({
+                     url: "https://graph.facebook.com/v2.4/gamingstealth/events?"+result+"&debug=all&format=json&method=get&pretty=0&suppress_http_code=1",
+                         success: function(result){
+                             console.log(result);
+                             console.log(result.data[0].id);
+                             console.log(result.data.length);
+                             
+                             for(i=0; i<result.data.length; i++){
+                                $.ajax({
+                                url: "https://graph.facebook.com/v2.4/"+result.data[i].id+"/?access_token="+accessToken+"&debug=all&fields=cover%2Cname%2Cdescription%2Cstart_time&format=json&method=get&pretty=0&suppress_http_code=1",
+                                    async: false,
+                                    success: function(result){
+                                        events[i]=result;
+                                        console.log(events[i]);
+                                        
+                                    }
+                                });
+                             }
+                             console.log(events);
+                            newEvents(events);
+                             
+                            
+                             
+                         }
+                     });
+                     
+                 }
+             });
+      
+      function newEvents(list) {
+          console.log(list.length);
       /** @type {Date} */
       var now = new Date;
       /** @type {number} */
       var i = 0;
       for (;i < list.length;i++) {
         /** @type {Date} */
-        var d = new Date(list[i].date);
+        var d = new Date(list[i].start_time);
         d.setHours(23);
         /** @type {Date} */
         list[i].dateObj = d;
@@ -110,6 +137,5 @@ function newEvents(i, month, response, value) {
         });
       });
       $(theNode).wrapInner("<div class='aspect-ratio-wrapper'></div>");
-    });
-  };
-}
+    };
+  
